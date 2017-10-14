@@ -7,15 +7,17 @@
         "doctrine/dbal": "^2.6",
         "doctrine/instantiator": "^1.1",
         "monolog/monolog": "^1.23",
-        "ramsey/uuid": "^3.7",
+        "phpunit/phpunit": "^6.4",
         "predis/predis": "^1.1",
-        "symfony/console": "^3.3",
+        "ramsey/uuid": "^3.7",
+        "symfony/console": "^2.7 || ^3.0",
         "symfony/process": "^2.7 || ^3.0",
         "symfony/var-dumper": "^2.7 || ^3.0"
     },
-    "autoload": {
+    "autoload-dev": {
         "psr-4": {
-            "Issei\\": "src/"
+            "Issei\\": "src/",
+            "Tests\\Issei\\": "tests/"
         }
     },
     "config": {
