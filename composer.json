@@ -1,0 +1,27 @@
+{
+    "require": {
+        "php": "^7.1",
+        "ext-pcntl": "*"
+    },
+    "require-dev": {
+        "doctrine/dbal": "^2.6",
+        "doctrine/instantiator": "^1.1",
+        "monolog/monolog": "^1.23",
+        "ramsey/uuid": "^3.7",
+        "predis/predis": "^1.1",
+        "symfony/console": "^3.3",
+        "symfony/process": "^2.7 || ^3.0",
+        "symfony/var-dumper": "^2.7 || ^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Issei\\": "src/"
+        }
+    },
+    "config": {
+        "platform": {
+            "php": "7.1"
+        },
+        "sort-packages": true
+    }
+}
