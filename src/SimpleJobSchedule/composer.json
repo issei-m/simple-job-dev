@@ -1,0 +1,31 @@
+{
+    "name": "issei-m/simple-job-schedule",
+    "type": "library",
+    "description": "The simple job scheduler for PHP.",
+    "keywords": ["job", "schedule", "scheduler"],
+    "homepage": "https://github.com/issei-m/simple-job-schedule",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Issei Murasawa",
+            "email": "issei.m7@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^7.1",
+        "issei-m/simple-job-queue": "^0.1-dev"
+    },
+    "autoload": {
+        "psr-4": {
+            "Issei\\SimpleJobSchedule\\": "./"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "0.1.x-dev"
+        }
+    }
+}
