@@ -31,9 +31,10 @@ final class Hybrid implements QueueInterface, ReporterInterface
         $this->jobSerializer = $jobSerializer ?: new JobSerializer();
 
         $this->queueSchema = $queueSchema ?: new Schema\QueueSchema();
-        $this->reporterSchema = $reporterSchema ?: new Schema\ReporterSchema();
-        $this->reporterSchema->table = $this->queueSchema->table;
-        $this->reporterSchema->jobIdColumn = $this->queueSchema->idColumn;
+        $this->reporterSchema = $reporterSchema ?: new Schema\ReporterSchema([
+            'table' => $this->queueSchema->table,
+            'jobIdColumn' => $this->queueSchema->idColumn
+        ]);
     }
 
     private function createEnqueueQueryBuilder(array $serialized, \DateTimeInterface $executesAt): QueryBuilder
