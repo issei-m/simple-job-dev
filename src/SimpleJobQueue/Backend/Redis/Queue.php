@@ -44,7 +44,7 @@ class Queue implements QueueInterface
         $serialized = $this->serializer->serialize($job);
 
         if ($executeAt) {
-            $serialized['execute_at'] =$executeAt->format('Y-m-d H:i:s');
+            $serialized['execute_at'] = $executeAt->format('Y-m-d H:i:s');
         }
 
         $this->redis->rpush($this->name, [json_encode($serialized)]);
