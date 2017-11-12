@@ -20,19 +20,19 @@ class Queue implements QueueInterface
     private $redis;
 
     /**
+     * @var string
+     */
+    private $key;
+
+    /**
      * @var JobSerializer
      */
     private $serializer;
 
-    /**
-     * @var string
-     */
-    private $name;
-
-    public function __construct(Redis $redis, string $name, JobSerializer $serializer = null)
+    public function __construct(Redis $redis, string $key, JobSerializer $serializer = null)
     {
         $this->redis = $redis;
-        $this->name = $name;
+        $this->key = $key;
         $this->serializer = $serializer ?: new JobSerializer();
     }
 
@@ -43,11 +43,13 @@ class Queue implements QueueInterface
     {
         $serialized = $this->serializer->serialize($job);
 
-        if ($executeAt) {
-            $serialized['execute_at'] = $executeAt->format('Y-m-d H:i:s');
-        }
+        $value = json_encode($serialized);
 
-        $this->redis->rpush($this->name, [json_encode($serialized)]);
+        if ($executeAt) {
+            $this->redis->zadd($this->getKeyForDelayed(), [$value => $executeAt->getTimestamp()]);
+        } else {
+            $this->redis->rpush($this->key, [$value]);
+        }
     }
 
     /**
@@ -55,11 +57,32 @@ class Queue implements QueueInterface
      */
     public function dequeue(): ?Job
     {
-        $deserialized = $this->redis->lpop($this->name);
+        $this->checkDelayed();
+
+        $deserialized = $this->redis->lpop($this->key);
         if (null === $deserialized) {
             return null;
         }
 
         return $this->serializer->deserialize(json_decode($deserialized, true));
+    }
+
+    private function checkDelayed(): void
+    {
+        $script = <<< 'LUA'
+local jobs_to_be_run = redis.call('ZRANGEBYSCORE', KEYS[1], 0, ARGV[1], 'LIMIT', 0, 1)
+
+if (next(jobs_to_be_run) ~= nil) then
+    redis.call('zremrangebyrank', KEYS[1], 0, 0)
+    redis.call('rpush', KEYS[2], jobs_to_be_run[1])
+end
+LUA;
+
+        $this->redis->eval($script, 2, $this->getKeyForDelayed(), $this->key, time());
+    }
+
+    private function getKeyForDelayed(): string
+    {
+        return $this->key . ':delayed';
     }
 }
