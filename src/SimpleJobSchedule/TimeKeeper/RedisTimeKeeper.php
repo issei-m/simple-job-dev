@@ -17,9 +17,15 @@ class RedisTimeKeeper implements TimeKeeperInterface
      */
     private $redis;
 
-    public function __construct(Redis $redis)
+    /**
+     * @var string
+     */
+    private $baseKey;
+
+    public function __construct(Redis $redis, string $baseKey)
     {
         $this->redis = $redis;
+        $this->baseKey = $baseKey;
     }
 
     /**
@@ -27,7 +33,7 @@ class RedisTimeKeeper implements TimeKeeperInterface
      */
     public function getLastRanTime(string $key): ?\DateTimeInterface
     {
-        $lastRanAtAsEpoch = $this->redis->get($key);
+        $lastRanAtAsEpoch = $this->redis->get($this->getKeyFor($key));
 
         return $lastRanAtAsEpoch
             ? (new \DateTimeImmutable())->setTimestamp((int) $lastRanAtAsEpoch)
@@ -51,6 +57,11 @@ else
 end
 LUA;
 
-        return (bool) $this->redis->eval($script, 1, $key, $runTime->getTimestamp());
+        return (bool) $this->redis->eval($script, 1, $this->getKeyFor($key), $runTime->getTimestamp());
+    }
+
+    private function getKeyFor(string $key): string
+    {
+        return $this->baseKey . ':' . $key;
     }
 }
