@@ -14,11 +14,11 @@ interface ReporterInterface
     /**
      * Reports the job has started running on some worker as the process which has the given PID.
      *
-     * @param JobId  $jobId
+     * @param Job    $job
      * @param string $workerName
      * @param int    $pid
      */
-    public function reportJobRunning(JobId $jobId, string $workerName, int $pid): void;
+    public function reportJobRunning(Job $job, string $workerName, int $pid): void;
 
     /**
      * Updates the job output.

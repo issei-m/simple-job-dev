@@ -22,10 +22,10 @@ final class ReporterChain implements ReporterInterface
     /**
      * {@inheritdoc}
      */
-    public function reportJobRunning(JobId $jobId, string $workerName, int $pid): void
+    public function reportJobRunning(Job $job, string $workerName, int $pid): void
     {
         foreach ($this->reporters as $reporter) {
-            $reporter->reportJobRunning($jobId, $workerName, $pid);
+            $reporter->reportJobRunning($job, $workerName, $pid);
         }
     }
 
