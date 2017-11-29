@@ -43,7 +43,7 @@ class Queue implements QueueInterface
     {
         $serialized = $this->serializer->serialize($job);
 
-        $value = json_encode($serialized);
+        $value = \json_encode($serialized);
 
         if ($executeAt) {
             $this->redis->zadd($this->getKeyForDelayed(), [$value => $executeAt->getTimestamp()]);
@@ -64,7 +64,7 @@ class Queue implements QueueInterface
             return null;
         }
 
-        return $this->serializer->deserialize(json_decode($deserialized, true));
+        return $this->serializer->deserialize(\json_decode($deserialized, true));
     }
 
     private function checkDelayed(): void

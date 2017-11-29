@@ -9,6 +9,7 @@ namespace Issei\SimpleJobQueue\Backend\RDB\Schema;
  * @property-read string $idColumn
  * @property-read string $nameColumn
  * @property-read string $argumentsColumn
+ * @property-read string $queueColumn
  * @property-read string $executeAtColumn
  * @property-read string $maxRetriesColumn
  * @property-read string $retryIntervalColumn
@@ -24,6 +25,7 @@ final class QueueSchema
         'idColumn' => 'id',
         'nameColumn' => 'name',
         'argumentsColumn' => 'arguments',
+        'queueColumn' => 'queue',
         'executeAtColumn' => 'execute_at',
         'maxRetriesColumn' => 'max_retries',
         'retryIntervalColumn' => 'retry_interval',
