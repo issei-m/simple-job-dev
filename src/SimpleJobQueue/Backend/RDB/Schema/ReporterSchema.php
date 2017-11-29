@@ -8,6 +8,7 @@ namespace Issei\SimpleJobQueue\Backend\RDB\Schema;
  * @property-read string $table
  * @property-read string $jobIdColumn
  * @property-read string $stateColumn
+ * @property-read string $serializedColumn
  * @property-read string $workerNameColumn
  * @property-read string $startedAtColumn
  * @property-read string $finishedAtColumn
@@ -26,6 +27,7 @@ final class ReporterSchema
         'table' => 'job_reports',
         'jobIdColumn' => 'job_id',
         'stateColumn' => 'state',
+        'serializedColumn' => 'serialized',
         'workerNameColumn' => 'worker_name',
         'startedAtColumn' => 'started_at',
         'finishedAtColumn' => 'finished_at',

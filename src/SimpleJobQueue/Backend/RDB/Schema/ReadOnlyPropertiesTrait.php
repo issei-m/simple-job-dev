@@ -16,11 +16,11 @@ trait ReadOnlyPropertiesTrait
         $this->properties = self::DEFAULT_PROPERTIES;
 
         foreach ($properties as $name => $value) {
-            if (!array_key_exists($name, self::DEFAULT_PROPERTIES)) {
+            if (!\array_key_exists($name, self::DEFAULT_PROPERTIES)) {
                 throw new \InvalidArgumentException(sprintf('The property "%s" does not exist.', $name));
             }
 
-            if (is_string($value) && '' === $value) {
+            if (\is_string($value) && '' === $value) {
                 throw new \InvalidArgumentException('The value should be a non empty string.');
             }
 
@@ -30,7 +30,7 @@ trait ReadOnlyPropertiesTrait
 
     public function __get(string $name)
     {
-        if (!array_key_exists($name, self::DEFAULT_PROPERTIES)) {
+        if (!\array_key_exists($name, self::DEFAULT_PROPERTIES)) {
             throw new \InvalidArgumentException(sprintf('The property "%s" does not exist.', $name));
         }
 
@@ -44,6 +44,6 @@ trait ReadOnlyPropertiesTrait
 
     public function __isset(string $name)
     {
-        return array_key_exists($name, self::DEFAULT_PROPERTIES);
+        return \array_key_exists($name, self::DEFAULT_PROPERTIES);
     }
 }

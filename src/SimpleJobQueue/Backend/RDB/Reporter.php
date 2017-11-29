@@ -4,49 +4,64 @@ declare(strict_types=1);
 
 namespace Issei\SimpleJobQueue\Backend\RDB;
 
-use Doctrine\DBAL\Query\QueryBuilder;
+use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Types\Type;
+use Issei\SimpleJobQueue\Backend\RDB\Schema\ReporterSchema;
+use Issei\SimpleJobQueue\Job;
 use Issei\SimpleJobQueue\JobId;
+use Issei\SimpleJobQueue\ReporterInterface;
+use Issei\SimpleJobQueue\Util\JobSerializer;
 
 /**
  * @author Issei Murasawa <issei.m7@gmail.com>
  */
-trait ReporterTrait
+class Reporter implements ReporterInterface
 {
-    use BaseTrait;
+    /**
+     * @var Connection
+     */
+    private $conn;
 
     /**
-     * @var Schema\ReporterSchema
+     * @var ReporterSchema
      */
     private $reporterSchema;
 
     /**
-     * {@inheritdoc}
+     * @var JobSerializer
      */
-    public function reportJobRunning(JobId $jobId, string $workerName, int $pid): void
-    {
-        $qb = $this->createReportJobRunningQueryBuilder($jobId, $workerName);
+    private $jobSerializer;
 
-        $this->conn->transactional(function () use ($qb) {
-            $qb->execute();
-        });
+    public function __construct(Connection $conn, ReporterSchema $reporterSchema = null, JobSerializer $jobSerializer = null)
+    {
+        $this->conn = $conn;
+        $this->reporterSchema = $reporterSchema ?: new ReporterSchema();
+        $this->jobSerializer = $jobSerializer ?: new JobSerializer();
     }
 
-    private function createReportJobRunningQueryBuilder(JobId $jobId, string $workerName): QueryBuilder
+    /**
+     * {@inheritdoc}
+     */
+    public function reportJobRunning(Job $job, string $workerName, int $pid): void
     {
-        return $this->conn->createQueryBuilder()
+        $serialized = $this->jobSerializer->serialize($job);
+        unset($serialized['id']);
+
+        $qb = $this->conn->createQueryBuilder()
             ->insert($this->reporterSchema->table)
             ->values([
                 $this->reporterSchema->jobIdColumn => ':job_id',
                 $this->reporterSchema->stateColumn => ':state',
+                $this->reporterSchema->serializedColumn => ':serialized',
                 $this->reporterSchema->workerNameColumn => ':worker_name',
                 $this->reporterSchema->startedAtColumn => ':started_at',
                 $this->reporterSchema->stdoutColumn => ':empty',
                 $this->reporterSchema->stderrColumn => ':empty',
             ])
             ->setParameters([
-                'job_id' => $jobId,
+                'job_id' => $job->getId(),
                 'state' => JobStates::STATE_RUNNING,
+                'serialized' => $serialized['name'] . ':' . $serialized['arguments'],
                 'worker_name' => $workerName,
                 'started_at' => new \DateTimeImmutable('now'),
                 'empty' => '',
@@ -54,6 +69,10 @@ trait ReporterTrait
                 'started_at' => Type::getType('datetime_immutable'),
             ])
         ;
+
+        $this->conn->transactional(function () use ($qb) {
+            $qb->execute();
+        });
     }
 
     /**
@@ -61,18 +80,9 @@ trait ReporterTrait
      */
     public function updateJobOutput(JobId $jobId, string $newOutput, string $newErrorOutput): void
     {
-        $qb = $this->createUpdateJobOutputQueryBuilder($jobId, $newOutput, $newErrorOutput);
-
-        $this->conn->transactional(function () use ($qb) {
-            $qb->execute();
-        });
-    }
-
-    private function createUpdateJobOutputQueryBuilder(JobId $jobId, string $newOutput, string $newErrorOutput): QueryBuilder
-    {
         $platform = $this->conn->getDatabasePlatform();
 
-        return $this->conn->createQueryBuilder()
+        $qb = $this->conn->createQueryBuilder()
             ->update($this->reporterSchema->table)
             ->set($this->reporterSchema->stdoutColumn, $platform->getConcatExpression($this->reporterSchema->stdoutColumn, ':new_stdout'))
             ->set($this->reporterSchema->stderrColumn, $platform->getConcatExpression($this->reporterSchema->stderrColumn, ':new_stderr'))
@@ -83,6 +93,10 @@ trait ReporterTrait
                 'new_stderr' => $newErrorOutput,
             ])
         ;
+
+        $this->conn->transactional(function () use ($qb) {
+            $qb->execute();
+        });
     }
 
     /**
@@ -90,18 +104,9 @@ trait ReporterTrait
      */
     public function reportJobFinished(JobId $jobId, int $exitCode, string $newErrorOutput, string $newOutput): void
     {
-        $qb = $this->createReportJobFinishedQueryBuilder($jobId, $exitCode, $newOutput, $newErrorOutput);
-
-        $this->conn->transactional(function () use ($qb) {
-            $qb->execute();
-        });
-    }
-
-    private function createReportJobFinishedQueryBuilder(JobId $jobId, int $exitCode, string $newErrorOutput, string $newOutput): QueryBuilder
-    {
         $platform = $this->conn->getDatabasePlatform();
 
-        return $this->conn->createQueryBuilder()
+        $qb = $this->conn->createQueryBuilder()
             ->update($this->reporterSchema->table)
             ->set($this->reporterSchema->stateColumn, ':state')
             ->set($this->reporterSchema->finishedAtColumn, ':finished_at')
@@ -120,6 +125,10 @@ trait ReporterTrait
                 'finished_at' => Type::getType('datetime_immutable'),
             ])
         ;
+
+        $this->conn->transactional(function () use ($qb) {
+            $qb->execute();
+        });
     }
 
     /**
@@ -127,16 +136,7 @@ trait ReporterTrait
      */
     public function reportJobRetrying(JobId $jobId, JobId $toJobId): void
     {
-        $qb = $this->createReportJobRetryingQueryBuilder($jobId, $toJobId);
-
-        $this->conn->transactional(function () use ($qb) {
-            $qb->execute();
-        });
-    }
-
-    private function createReportJobRetryingQueryBuilder(JobId $jobId, JobId $toJobId): QueryBuilder
-    {
-        return $this->conn->createQueryBuilder()
+        $qb = $this->conn->createQueryBuilder()
             ->update($this->reporterSchema->table)
             ->set($this->reporterSchema->retryToColumn, ':to_job_id')
             ->where($this->reporterSchema->jobIdColumn . ' = :job_id')
@@ -145,5 +145,9 @@ trait ReporterTrait
                 'to_job_id' => $toJobId,
             ])
         ;
+
+        $this->conn->transactional(function () use ($qb) {
+            $qb->execute();
+        });
     }
 }
