@@ -17,11 +17,6 @@ class Scheduler
     private $timeKeeper;
 
     /**
-     * @var QueueInterface
-     */
-    private $jobQueue;
-
-    /**
      * @var ScheduleInterface[]
      */
     private $schedules = [];
@@ -36,33 +31,44 @@ class Scheduler
      */
     private $shouldTerminate;
 
-    public function __construct(TimeKeeperInterface $timeKeeper, QueueInterface $jobQueue)
+    public function __construct(TimeKeeperInterface $timeKeeper)
     {
         $this->timeKeeper = $timeKeeper;
-        $this->jobQueue = $jobQueue;
     }
 
-    public function addSchedule(ScheduleInterface $schedule): void
+    /**
+     * Adds the schedule.
+     *
+     * @param ScheduleInterface $schedule The schedule.
+     * @param QueueInterface    $jobQueue The corresponding queue.
+     */
+    public function addSchedule(ScheduleInterface $schedule, QueueInterface $jobQueue): void
     {
-        $this->schedules[] = $schedule;
+        $this->schedules[] = [$schedule, $jobQueue];
     }
 
+    /**
+     * Daemonizes.
+     *
+     * @param int $maxRuntimeInSec The maximum runtime in second, the daemon will be terminated after this time was elapsed.
+     */
     public function daemon(int $maxRuntimeInSec = 60 * 60): void
     {
-        pcntl_signal(SIGTERM, function () {
+        \pcntl_signal(SIGTERM, function () {
             $this->shouldTerminate = true;
         });
 
-        $this->startedTime = time();
+        $this->startedTime = \time();
 
         $populatedSchedules = $this->prePopulateSchedules();
 
         while (!$this->shouldTerminate) {
-            pcntl_signal_dispatch();
+            \pcntl_signal_dispatch();
 
-            foreach ($populatedSchedules as $key => [$schedule, $lastRanAt]) {
-                assert($schedule instanceof ScheduleInterface);
-                assert($lastRanAt instanceof \DateTimeInterface);
+            foreach ($populatedSchedules as $key => [$schedule, $jobQueue, $lastRanAt]) {
+                \assert($schedule instanceof ScheduleInterface);
+                \assert($jobQueue instanceof QueueInterface);
+                \assert($lastRanAt instanceof \DateTimeInterface);
 
                 if (!$schedule->shouldRun($lastRanAt)) {
                     continue;
@@ -71,17 +77,17 @@ class Scheduler
                 $now = new \DateTimeImmutable('now');
 
                 if ($this->timeKeeper->attemptToKeepRunTime($key, $now)) {
-                    $this->jobQueue->enqueue($schedule->createJob());
+                    $jobQueue->enqueue($schedule->createJob());
                 }
 
-                $populatedSchedules[$key] = [$schedule, $now];
+                $populatedSchedules[$key][2] = $now;
             }
 
-            if (time() > $this->startedTime + $maxRuntimeInSec) {
+            if (\time() > $this->startedTime + $maxRuntimeInSec) {
                 $this->shouldTerminate = true;
             }
 
-            usleep(1000000);
+            \usleep(1000000);
         }
     }
 
@@ -91,9 +97,13 @@ class Scheduler
 
         $populated = [];
 
-        foreach ($this->schedules as $schedule) {
-            $key = strtolower(get_class($schedule));
-            $populated[$key] = [$schedule, $this->timeKeeper->getLastRanTime($key) ?? $schedulerStartedAt];
+        foreach ($this->schedules as [$schedule, $jobQueue]) {
+            $key = \strtolower(\get_class($schedule));
+            $populated[$key] = [
+                $schedule,
+                $jobQueue,
+                $this->timeKeeper->getLastRanTime($key) ?? $schedulerStartedAt,
+            ];
         }
 
         return $populated;
