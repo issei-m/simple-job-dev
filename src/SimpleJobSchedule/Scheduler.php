@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Issei\SimpleJobSchedule;
 
 use Issei\SimpleJobQueue\QueueInterface;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 /**
  * @author Issei Murasawa <issei.m7@gmail.com>
@@ -15,6 +17,11 @@ class Scheduler
      * @var TimeKeeperInterface
      */
     private $timeKeeper;
+
+    /**
+     * @var LoggerInterface
+     */
+    private $logger;
 
     /**
      * @var ScheduleInterface[]
@@ -31,9 +38,10 @@ class Scheduler
      */
     private $shouldTerminate;
 
-    public function __construct(TimeKeeperInterface $timeKeeper)
+    public function __construct(TimeKeeperInterface $timeKeeper, LoggerInterface $logger = null)
     {
         $this->timeKeeper = $timeKeeper;
+        $this->logger = $logger ?: new NullLogger();
     }
 
     /**
@@ -56,11 +64,13 @@ class Scheduler
     {
         \pcntl_signal(SIGTERM, function () {
             $this->shouldTerminate = true;
+            $this->logger->debug('Caught SIGTERM, daemon goes into termination.');
         });
 
         $this->startedTime = \time();
 
         $populatedSchedules = $this->prePopulateSchedules();
+        $this->logger->debug(sprintf('Populated %s schedule(s).', \count($populatedSchedules)));
 
         while (!$this->shouldTerminate) {
             \pcntl_signal_dispatch();
@@ -77,7 +87,9 @@ class Scheduler
                 $now = new \DateTimeImmutable('now');
 
                 if ($this->timeKeeper->attemptToKeepRunTime($key, $now)) {
-                    $jobQueue->enqueue($schedule->createJob());
+                    $job = $schedule->createJob();
+                    $jobQueue->enqueue($job);
+                    $this->logger->info(sprintf('Enqueued job: %s', $job->getId()));
                 }
 
                 $populatedSchedules[$key][2] = $now;
@@ -85,6 +97,7 @@ class Scheduler
 
             if (\time() > $this->startedTime + $maxRuntimeInSec) {
                 $this->shouldTerminate = true;
+                $this->logger->debug(sprintf('The max runtime (%d sec) elapsed, daemon goes into termination.', $maxRuntimeInSec));
             }
 
             \usleep(1000000);

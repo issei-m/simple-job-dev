@@ -9,6 +9,8 @@ use Doctrine\DBAL\Exception\RetryableException;
 use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\DBAL\Types\Type;
 use Issei\SimpleJobSchedule\TimeKeeperInterface;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 /**
  * @author Issei Murasawa <issei.m7@gmail.com>
@@ -35,12 +37,23 @@ class RDBTimeKeeper implements TimeKeeperInterface
      */
     private $timeColumn;
 
-    public function __construct(Connection $conn, string $table = 'job_schedules', string $keyColumn = '`key`', string $timeColumn = 'last_ran_at')
-    {
+    /**
+     * @var LoggerInterface
+     */
+    private $logger;
+
+    public function __construct(
+        Connection $conn,
+        string $table = 'job_schedules',
+        string $keyColumn = '`key`',
+        string $timeColumn = 'last_ran_at',
+        LoggerInterface $logger = null
+    ) {
         $this->conn = $conn;
         $this->table = $table;
         $this->keyColumn = $keyColumn;
         $this->timeColumn = $timeColumn;
+        $this->logger = $logger ?: new NullLogger();
     }
 
     /**
@@ -111,6 +124,8 @@ class RDBTimeKeeper implements TimeKeeperInterface
             try {
                 return 1 === $writeQb->execute();
             } catch (RetryableException $e) {
+                $this->logger->debug(sprintf('Caught retryable exception: "%s"', $e->getMessage()));
+
                 return false;
             }
         });
