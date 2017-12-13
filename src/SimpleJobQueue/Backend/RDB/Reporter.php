@@ -42,7 +42,7 @@ class Reporter implements ReporterInterface
     /**
      * {@inheritdoc}
      */
-    public function reportJobRunning(Job $job, string $workerName, int $pid): void
+    public function reportJobRunning(Job $job, string $workerName): void
     {
         $serialized = $this->jobSerializer->serialize($job);
         unset($serialized['id']);
