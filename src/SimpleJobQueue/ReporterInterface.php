@@ -12,13 +12,12 @@ namespace Issei\SimpleJobQueue;
 interface ReporterInterface
 {
     /**
-     * Reports the job has started running on some worker as the process which has the given PID.
+     * Reports the job has started running on some worker.
      *
      * @param Job    $job
      * @param string $workerName
-     * @param int    $pid
      */
-    public function reportJobRunning(Job $job, string $workerName, int $pid): void;
+    public function reportJobRunning(Job $job, string $workerName): void;
 
     /**
      * Updates the job output.

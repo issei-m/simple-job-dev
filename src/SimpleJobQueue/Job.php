@@ -17,7 +17,7 @@ class Job
     private $id;
 
     /**
-     * @var JobId
+     * @var string
      */
     private $name;
 
@@ -46,7 +46,7 @@ class Job
     {
         $this->id = new JobId();
         $this->name = $name;
-        $this->arguments = is_array($arguments) ? $arguments : iterator_to_array($arguments);
+        $this->arguments = \is_array($arguments) ? $arguments : \iterator_to_array($arguments);
         $this->maxRetries = $maxRetries;
         $this->retryInterval = $retryInterval;
     }
@@ -64,6 +64,16 @@ class Job
     public function getId(): JobId
     {
         return $this->id;
+    }
+
+    /**
+     * Returns the name.
+     *
+     * @return string
+     */
+    public function getName(): string
+    {
+        return $this->name;
     }
 
     /**
