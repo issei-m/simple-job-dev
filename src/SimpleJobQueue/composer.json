@@ -16,7 +16,7 @@
         "ext-pcntl": "*",
         "doctrine/instantiator": "^1.1",
         "ramsey/uuid": "^3.7",
-        "symfony/process": "^2.7 || ^3.0"
+        "symfony/process": "^2.7 || ^3.0 || ^4.0"
     },
     "autoload": {
         "psr-4": {
