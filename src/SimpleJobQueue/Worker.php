@@ -87,7 +87,7 @@ class Worker
             $this->logger->debug('Caught SIGTERM, worker goes into termination.');
         });
 
-        $this->startedTime = time();
+        $this->startedTime = \time();
 
         $this->logger->info('Worker started: ' . $this->name);
 
@@ -113,7 +113,7 @@ class Worker
                 $this->logger->info(\sprintf('%s START', $job->getName()), ['job' => (string) $job->getId(), 'pid' => $process->getPid()]);
             }
 
-            if (\time() > $this->startedTime + $maxRuntimeInSec) {
+            if (!$this->shouldTerminate && \time() > $this->startedTime + $maxRuntimeInSec) {
                 $this->shouldTerminate = true;
                 $this->logger->debug('Elapsed maximum runtime, worker goes into termination.');
             }
