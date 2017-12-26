@@ -95,7 +95,7 @@ class Scheduler
                 $populatedSchedules[$key][2] = $now;
             }
 
-            if (\time() > $this->startedTime + $maxRuntimeInSec) {
+            if (!$this->shouldTerminate && \time() > $this->startedTime + $maxRuntimeInSec) {
                 $this->shouldTerminate = true;
                 $this->logger->debug(sprintf('The max runtime (%d sec) elapsed, daemon goes into termination.', $maxRuntimeInSec));
             }
