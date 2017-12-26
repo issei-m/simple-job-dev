@@ -14,7 +14,8 @@
     "require": {
         "php": "^7.1",
         "ext-pcntl": "*",
-        "issei-m/simple-job-queue": "^0.1-dev"
+        "issei-m/simple-job-queue": "^0.1-dev",
+        "psr/log": "^1.0"
     },
     "autoload": {
         "psr-4": {
