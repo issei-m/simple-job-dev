@@ -96,26 +96,15 @@ class Worker
 
             $this->checkRunningJobs();
 
-            if (!$this->shouldTerminate && \count($this->runningJobs) < $this->maxJobs) {
-                $job = $this->queue->dequeue();
-                if (null === $job) {
-                    continue;
+            if (!$this->shouldTerminate) {
+                if (\count($this->runningJobs) < $this->maxJobs && null !== $job = $this->queue->dequeue()) {
+                    $this->handleDequeuedJob($job);
                 }
 
-                $this->logger->info('Dequeued job: ' . $job->getId());
-
-                $process = $job->createProcess($this->processFactory);
-                $this->runningJobs[$job] = $process;
-
-                $process->start();
-
-                $this->reporter->reportJobRunning($job, $this->name);
-                $this->logger->info(\sprintf('%s START', $job->getName()), ['job' => (string) $job->getId(), 'pid' => $process->getPid()]);
-            }
-
-            if (!$this->shouldTerminate && \time() > $this->startedTime + $maxRuntimeInSec) {
-                $this->shouldTerminate = true;
-                $this->logger->debug('Elapsed maximum runtime, worker goes into termination.');
+                if (\time() > $this->startedTime + $maxRuntimeInSec) {
+                    $this->shouldTerminate = true;
+                    $this->logger->debug('Elapsed maximum runtime, worker goes into termination.');
+                }
             }
 
             \usleep(500000);
@@ -147,6 +136,19 @@ class Worker
                 $this->handleTerminatedJob($job, $process, $incrementalStdOut, $incrementalStdErr);
             }
         }
+    }
+
+    private function handleDequeuedJob(Job $job): void
+    {
+        $this->logger->info('Dequeued job: ' . $job->getId());
+
+        $process = $job->createProcess($this->processFactory);
+        $this->runningJobs[$job] = $process;
+
+        $process->start();
+
+        $this->reporter->reportJobRunning($job, $this->name);
+        $this->logger->info(\sprintf('%s START', $job->getName()), ['job' => (string) $job->getId(), 'pid' => $process->getPid()]);
     }
 
     private function handleTerminatedJob(Job $job, Process $process, string $lastStdOut, string $lastStdErr): void
