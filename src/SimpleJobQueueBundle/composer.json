@@ -1,0 +1,33 @@
+{
+    "name": "issei-m/simple-job-queue-bundle",
+    "type": "library",
+    "description": "Integrates issei-m/simple-job-queue system with your Symfony's app.",
+    "keywords": ["job", "queue", "worker", "symfony", "bundle"],
+    "homepage": "https://github.com/issei-m/simple-job-queue-bundle",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Issei Murasawa",
+            "email": "issei.m7@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^7.1",
+        "issei-m/simple-job-queue": "^0.1",
+        "symfony/dependency-injection": "^2.7 || ^3.0 || ^4.0",
+        "symfony/http-kernel": "^2.7 || ^3.0 || ^4.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Issei\\SimpleJobQueueBundle\\": "./"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "0.1.x-dev"
+        }
+    }
+}

@@ -1,0 +1,10 @@
+issei_simple_job_queue:
+    type: rdb
+    params:
+        driver: 'pdo_mysql'
+        host: '127.0.0.1'
+        port: 13306
+        dbname: 'simple_job_queue'
+        user: 'root'
+    reporter: ~
+    scheduler: rdb
