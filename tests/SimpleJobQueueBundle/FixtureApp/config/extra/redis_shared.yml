@@ -1,0 +1,7 @@
+issei_simple_job_queue:
+    type: redis
+    params: 'tcp://127.0.0.1:16379'
+    key: 'app_queue'
+    scheduler:
+        type: redis
+        key: 'app_schedule'

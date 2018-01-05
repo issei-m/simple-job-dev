@@ -1,0 +1,24 @@
+services:
+    success_of_failure_command:
+        class: Tests\Issei\SimpleJobQueueBundle\FixtureApp\Command\SuccessOrFailureCommand
+        tags:
+            - console.command
+            - issei_simple_job_queue.schedule
+
+    enqueue_sof_command:
+        class: Tests\Issei\SimpleJobQueueBundle\FixtureApp\Command\EnqueueSOFCommand
+        arguments:
+            - '@Issei\SimpleJobQueue\QueueInterface'
+        tags:
+            - console.command
+
+monolog:
+    handlers:
+        job:
+            type: console
+            process_psr_3_messages: false
+            verbosity_levels:
+                VERBOSITY_NORMAL: INFO
+                VERBOSITY_VERBOSE: DEBUG
+                VERBOSITY_VERY_VERBOSE: DEBUG
+            channels: ['job']
