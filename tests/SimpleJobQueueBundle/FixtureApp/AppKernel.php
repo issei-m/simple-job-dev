@@ -36,7 +36,7 @@ class AppKernel extends Kernel
 
     protected function getContainerClass(): string
     {
-        return $this->containerClassName;
+        return $this->containerClassName ?: parent::getContainerClass();
     }
 
     public function addExtraConfig(string $configBaseName): void

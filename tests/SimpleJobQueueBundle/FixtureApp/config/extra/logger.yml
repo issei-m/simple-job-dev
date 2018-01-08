@@ -1,0 +1,10 @@
+monolog:
+    handlers:
+        job:
+            type: console
+            process_psr_3_messages: false
+            verbosity_levels:
+                VERBOSITY_NORMAL: INFO
+                VERBOSITY_VERBOSE: DEBUG
+                VERBOSITY_VERY_VERBOSE: DEBUG
+            channels: ['job']
