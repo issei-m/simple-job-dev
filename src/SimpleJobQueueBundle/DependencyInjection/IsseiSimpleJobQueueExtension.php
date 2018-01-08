@@ -76,14 +76,16 @@ class IsseiSimpleJobQueueExtension extends Extension
                 ->setPublic(false)
             ;
 
-            if ('rdb' === $config['type']) {
+            $type = $config['type'];
+
+            if ('rdb' === $type) {
                 $connectionId = $this->loadRdbQueue($container, $queueDef, $name, $config);
             } else {
                 $connectionId = $this->loadRedisQueue($container, $queueDef, $name, $config);
             }
 
-            if (!isset($this->firstAppearedQueueConnectionId['rdb'])) {
-                $this->firstAppearedQueueConnectionId['rdb'] = $connectionId;
+            if (!isset($this->firstAppearedQueueConnectionId[$type])) {
+                $this->firstAppearedQueueConnectionId[$type] = $connectionId;
             }
 
             if ($defaultQueueName === $name) {
@@ -284,7 +286,7 @@ class IsseiSimpleJobQueueExtension extends Extension
                 ])
             ;
         } else {
-            $container->setAlias($connectionId, new Alias($config['connection_id'] ?? $this->getFirstAppearedQueueConnectionId('rdb'), false));
+            $container->setAlias($connectionId, new Alias($config['connection_id'] ?? $this->getFirstAppearedQueueConnectionId('redis'), false));
         }
 
         $timeKeeperDef

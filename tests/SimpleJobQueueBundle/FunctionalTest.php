@@ -14,6 +14,9 @@ use Issei\SimpleJobQueueBundle\Command\RunCommand;
 use Issei\SimpleJobQueueBundle\Command\ScheduleCommand;
 use Issei\SimpleJobQueueBundle\JobQueue\NullReporter;
 use Issei\SimpleJobSchedule\Scheduler;
+use Issei\SimpleJobSchedule\TimeKeeper\RDBTimeKeeper;
+use Issei\SimpleJobSchedule\TimeKeeper\RedisTimeKeeper;
+use Issei\SimpleJobSchedule\TimeKeeperInterface;
 use Predis\Client as RedisClient;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Config\Util\XmlUtils;
@@ -70,11 +73,19 @@ class FunctionalTest extends KernelTestCase
 
         $xpath = self::getXpathForContainerXml();
 
-        self::assertEquals('issei_simple_job_queue.queue.default', $xpath->query('//dic:service[@id="' . QueueInterface::class . '"]')->item(0)->getAttribute('alias'));
+        // queue
         self::assertEquals(RDBQueue::class, $xpath->query('//dic:service[@id="issei_simple_job_queue.queue.default"]')->item(0)->getAttribute('class'));
+        self::assertEquals('issei_simple_job_queue.queue.default.rdb_connection', $xpath->query('//dic:service[@id="issei_simple_job_queue.queue.default"]')->item(0)->getElementsByTagName('argument')->item(0)->getAttribute('id'));
+        self::assertEquals('issei_simple_job_queue.queue.default', $xpath->query('//dic:service[@id="' . QueueInterface::class . '"]')->item(0)->getAttribute('alias'));
         self::assertEquals(Connection::class, $xpath->query('//dic:service[@id="issei_simple_job_queue.queue.default.rdb_connection"]')->item(0)->getAttribute('class'));
+
+        // reporter
         self::assertEquals(NullReporter::class, $xpath->query('//dic:service[@id="' . ReporterInterface::class . '"]')->item(0)->getAttribute('class'));
+
+        // scheduler
         self::assertCount(0, $xpath->query('//dic:service[@id="' . Scheduler::class . '"]'));
+
+        // commands
         self::assertCount(1, $xpath->query('//dic:service[@id="' . RunCommand::class . '"]'));
         self::assertCount(0, $xpath->query('//dic:service[@id="' . ScheduleCommand::class . '"]'));
     }
@@ -87,12 +98,21 @@ class FunctionalTest extends KernelTestCase
 
         $xpath = self::getXpathForContainerXml();
 
+        // queue
         self::assertEquals(RDBQueue::class, $xpath->query('//dic:service[@id="issei_simple_job_queue.queue.default"]')->item(0)->getAttribute('class'));
+        self::assertEquals('issei_simple_job_queue.queue.default.rdb_connection', $xpath->query('//dic:service[@id="issei_simple_job_queue.queue.default"]')->item(0)->getElementsByTagName('argument')->item(0)->getAttribute('id'));
         self::assertEquals(Connection::class, $xpath->query('//dic:service[@id="issei_simple_job_queue.queue.default.rdb_connection"]')->item(0)->getAttribute('class'));
+
+        // reporter
         self::assertEquals(RDBReporter::class, $xpath->query('//dic:service[@id="' . ReporterInterface::class . '"]')->item(0)->getAttribute('class'));
-        self::assertEquals('issei_simple_job_queue.queue.default.rdb_connection', $xpath->query('//dic:service[@id="issei_simple_job_queue.reporter.rdb_connection"]')->item(0)->getAttribute('alias'));
+        self::assertEquals('issei_simple_job_queue.queue.default.rdb_connection', $xpath->query('//dic:service[@id="' . ReporterInterface::class . '"]')->item(0)->getElementsByTagName('argument')->item(0)->getAttribute('id'));
+
+        // scheduler
         self::assertCount(1, $xpath->query('//dic:service[@id="' . Scheduler::class . '"]'));
-        self::assertEquals('issei_simple_job_queue.queue.default.rdb_connection', $xpath->query('//dic:service[@id="issei_simple_job_queue.scheduler.rdb_connection"]')->item(0)->getAttribute('alias'));
+        self::assertEquals(RDBTimeKeeper::class, $xpath->query('//dic:service[@id="' . TimeKeeperInterface::class . '"]')->item(0)->getAttribute('class'));
+        self::assertEquals('issei_simple_job_queue.queue.default.rdb_connection', $xpath->query('//dic:service[@id="' . TimeKeeperInterface::class . '"]')->item(0)->getElementsByTagName('argument')->item(0)->getAttribute('id'));
+
+        // commands
         self::assertCount(1, $xpath->query('//dic:service[@id="' . RunCommand::class . '"]'));
         self::assertCount(1, $xpath->query('//dic:service[@id="' . ScheduleCommand::class . '"]'));
     }
@@ -105,10 +125,20 @@ class FunctionalTest extends KernelTestCase
 
         $xpath = self::getXpathForContainerXml();
 
+        // queue
         self::assertEquals(RedisQueue::class, $xpath->query('//dic:service[@id="issei_simple_job_queue.queue.default"]')->item(0)->getAttribute('class'));
+        self::assertEquals('issei_simple_job_queue.queue.default.redis_connection', $xpath->query('//dic:service[@id="issei_simple_job_queue.queue.default"]')->item(0)->getElementsByTagName('argument')->item(0)->getAttribute('id'));
         self::assertEquals(RedisClient::class, $xpath->query('//dic:service[@id="issei_simple_job_queue.queue.default.redis_connection"]')->item(0)->getAttribute('class'));
+
+        // reporter
+        self::assertEquals(NullReporter::class, $xpath->query('//dic:service[@id="' . ReporterInterface::class . '"]')->item(0)->getAttribute('class'));
+
+        // scheduler
         self::assertCount(1, $xpath->query('//dic:service[@id="' . Scheduler::class . '"]'));
-        self::assertEquals('issei_simple_job_queue.queue.default.redis_connection', $xpath->query('//dic:service[@id="issei_simple_job_queue.scheduler.redis_connection"]')->item(0)->getAttribute('alias'));
+        self::assertEquals(RedisTimeKeeper::class, $xpath->query('//dic:service[@id="' . TimeKeeperInterface::class . '"]')->item(0)->getAttribute('class'));
+        self::assertEquals('issei_simple_job_queue.queue.default.redis_connection', $xpath->query('//dic:service[@id="' . TimeKeeperInterface::class . '"]')->item(0)->getElementsByTagName('argument')->item(0)->getAttribute('id'));
+
+        // commands
         self::assertCount(1, $xpath->query('//dic:service[@id="' . RunCommand::class . '"]'));
         self::assertCount(1, $xpath->query('//dic:service[@id="' . ScheduleCommand::class . '"]'));
     }
