@@ -76,7 +76,9 @@ class RunCommand extends Command
         }
 
         $queue = $this->registry->getQueue($queueName);
-        $processFactory = $this->registry->getProcessFactoryFor($queue) ?? new ConsoleAppProcessFactory($this->getApplication());
+        $processFactory = $this->registry->getProcessFactoryFor($queue)
+            ?? new ConsoleAppProcessFactory($this->getApplication(), $input->hasOption('env') ? $input->getOption('env') : null)
+        ;
 
         (new Worker($workerName, $queue, $this->reporter, $processFactory, $maxJobs, $this->logger))->start($maxRuntimeInSec);
     }
