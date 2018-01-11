@@ -9,7 +9,6 @@ use Issei\SimpleJobQueue\ProcessFactoryInterface;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Process\PhpExecutableFinder;
 use Symfony\Component\Process\Process;
-use Symfony\Component\Process\ProcessBuilder;
 
 /**
  * @author Issei Murasawa <issei.m7@gmail.com>
@@ -21,11 +20,17 @@ final class ConsoleAppProcessFactory implements ProcessFactoryInterface
      */
     private $app;
 
+    /**
+     * @var string
+     */
+    private $env;
+
     private static $phpExecutable;
 
-    public function __construct(Application $app)
+    public function __construct(Application $app, string $env = null)
     {
         $this->app = $app;
+        $this->env = $env;
     }
 
     /**
@@ -41,14 +46,22 @@ final class ConsoleAppProcessFactory implements ProcessFactoryInterface
             throw new class($message) extends \RuntimeException implements ExceptionInterface {};
         }
 
-        return ProcessBuilder::create(\is_array($arguments) ? $arguments : iterator_to_array($arguments))
-            ->setPrefix([
-                self::findPhpExecutable(),
+        $arrayArguments = \is_array($arguments) ? $arguments : iterator_to_array($arguments);
+
+        if ($this->env) {
+            $arrayArguments[] = '--env=' . $this->env;
+        }
+
+        $phpExecutable = self::findPhpExecutable();
+
+        return new Process(
+            \array_merge([
+                basename($phpExecutable),
                 $this->guessConsoleFile(),
                 $command,
-            ])
-            ->getProcess()
-        ;
+            ], $arrayArguments),
+            \dirname($phpExecutable)
+        );
     }
 
     private static function findPhpExecutable(): string
