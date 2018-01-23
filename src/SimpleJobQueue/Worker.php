@@ -140,7 +140,7 @@ class Worker
 
     private function handleDequeuedJob(Job $job): void
     {
-        $this->logger->info('Dequeued job: ' . $job->getId());
+        $this->logger->info(\sprintf('Dequeued: %s', $job->getName()), ['job' => (string) $job->getId()]);
 
         $process = $job->createProcess($this->processFactory);
         $this->runningJobs[$job] = $process;

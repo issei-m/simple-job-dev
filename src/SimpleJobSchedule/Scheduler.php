@@ -70,7 +70,7 @@ class Scheduler
         $this->startedTime = \time();
 
         $populatedSchedules = $this->prePopulateSchedules();
-        $this->logger->debug(sprintf('Populated %s schedule(s).', \count($populatedSchedules)));
+        $this->logger->info(sprintf('Scheduler started with %s schedule(s).', \count($populatedSchedules)));
 
         while (!$this->shouldTerminate) {
             \pcntl_signal_dispatch();
@@ -89,7 +89,7 @@ class Scheduler
                 if ($this->timeKeeper->attemptToKeepRunTime($key, $now)) {
                     $job = $schedule->createJob();
                     $jobQueue->enqueue($job);
-                    $this->logger->info(sprintf('Enqueued job: %s', $job->getId()));
+                    $this->logger->info(sprintf('Enqueued: %s', $job->getName()), ['job' => (string) $job->getId()]);
                 }
 
                 $populatedSchedules[$key][2] = $now;
