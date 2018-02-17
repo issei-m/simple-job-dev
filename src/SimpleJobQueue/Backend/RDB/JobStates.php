@@ -9,9 +9,9 @@ namespace Issei\SimpleJobQueue\Backend\RDB;
  */
 final class JobStates
 {
-    const STATE_RUNNING = 'running';
-    const STATE_FINISHED = 'finished';
-    const STATE_FAILED = 'failed';
+    public const STATE_RUNNING = 'running';
+    public const STATE_FINISHED = 'finished';
+    public const STATE_FAILED = 'failed';
 
     private function __construct()
     {
