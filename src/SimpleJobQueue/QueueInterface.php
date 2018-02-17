@@ -20,7 +20,7 @@ interface QueueInterface
      *
      * @return void
      */
-    public function enqueue(Job $job,  \DateTimeInterface $executeAt = null): void;
+    public function enqueue(Job $job, \DateTimeInterface $executeAt = null): void;
 
     /**
      * Returns the available job to be ran, or NULL if no available jobs.
