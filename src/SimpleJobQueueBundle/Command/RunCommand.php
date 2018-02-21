@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Issei\SimpleJobQueueBundle\Command;
 
 use Issei\SimpleJobQueue\ReporterInterface;
+use Issei\SimpleJobQueue\RetryScheduler\FixedIntervalScheduler;
 use Issei\SimpleJobQueue\Worker;
 use Issei\SimpleJobQueueBundle\JobQueue\ConsoleAppProcessFactory;
 use Issei\SimpleJobQueueBundle\QueueRegistry;
@@ -80,6 +81,14 @@ class RunCommand extends Command
             ?? new ConsoleAppProcessFactory($this->getApplication(), $input->hasOption('env') ? $input->getOption('env') : null)
         ;
 
-        (new Worker($workerName, $queue, $this->reporter, $processFactory, $maxJobs, $this->logger))->start($maxRuntimeInSec);
+        (new Worker(
+            $workerName,
+            $queue,
+            $this->reporter,
+            $processFactory,
+            new FixedIntervalScheduler(5),
+            $maxJobs,
+            $this->logger
+        ))->start($maxRuntimeInSec);
     }
 }
