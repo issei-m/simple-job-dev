@@ -53,9 +53,9 @@ class JobSerializer
         return [
             'id' => $job->getId()->__toString(),
             'name' => $this->jobPropertyReflectors['name']->getValue($job),
-            'arguments' => json_encode($this->jobPropertyReflectors['arguments']->getValue($job)),
+            'arguments' => \json_encode($this->jobPropertyReflectors['arguments']->getValue($job)),
             'max_retries' => $this->jobPropertyReflectors['maxRetries']->getValue($job),
-            'retry_interval' => $this->jobPropertyReflectors['retryInterval']->getValue($job),
+            'retries' => $this->jobPropertyReflectors['retries']->getValue($job),
         ];
     }
 
@@ -72,14 +72,14 @@ class JobSerializer
 
         $job = $this->instantiator->instantiate(Job::class);
 
-        $arguments = json_decode($serialized['arguments'], true);
-        assert(is_array($arguments));
+        $arguments = \json_decode($serialized['arguments'], true);
+        \assert(\is_array($arguments));
 
         $this->jobPropertyReflectors['id']->setValue($job, new JobId(Uuid::fromString($serialized['id'])));
         $this->jobPropertyReflectors['name']->setValue($job, $serialized['name']);
         $this->jobPropertyReflectors['arguments']->setValue($job, $arguments);
         $this->jobPropertyReflectors['maxRetries']->setValue($job, $serialized['max_retries']);
-        $this->jobPropertyReflectors['retryInterval']->setValue($job, $serialized['retry_interval']);
+        $this->jobPropertyReflectors['retries']->setValue($job, $serialized['retries']);
 
         return $job;
     }
@@ -95,7 +95,7 @@ class JobSerializer
         $this->jobIdPropertyReflector->setAccessible(true);
 
         $jobRefl = new \ReflectionClass(Job::class);
-        foreach (['id', 'name', 'arguments', 'maxRetries', 'retryInterval'] as $propName) {
+        foreach (['id', 'name', 'arguments', 'maxRetries', 'retries'] as $propName) {
             $this->jobPropertyReflectors[$propName] = $jobRefl->getProperty($propName);
             $this->jobPropertyReflectors[$propName]->setAccessible(true);
         }

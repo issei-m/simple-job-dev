@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Issei\SimpleJobQueue\Util;
 
 use Issei\SimpleJobQueue\Job;
+use Issei\SimpleJobQueue\RetrySchedulerInterface;
 use Issei\SimpleJobQueue\Util\JobSerializer;
 use PHPUnit\Framework\TestCase;
 
@@ -29,7 +30,14 @@ class JobSerializerTest extends TestCase
     public static function dataProvider(): array
     {
         $job1 = new Job('Foo');
-        $job2 = new Job('Bar', ['--a=b', '-cde', 'fgh'], 5, 60);
+        $job2 = new Job('Bar', ['--a=b', '-cde', 'fgh'], 5);
+        [$job3] = $job2->retry(new class implements RetrySchedulerInterface {
+            public function scheduleNextRetry(Job $retryJob, int $retriedCount): ?\DateTimeInterface
+            {
+                return null;
+            }
+        });
+        \assert($job3 instanceof Job);
 
         return [
             [
@@ -37,9 +45,9 @@ class JobSerializerTest extends TestCase
                 [
                     'id' => $job1->getId()->__toString(),
                     'name' => 'Foo',
-                    'arguments' => json_encode([]),
+                    'arguments' => \json_encode([]),
                     'max_retries' => 0,
-                    'retry_interval' => 0,
+                    'retries' => 0,
                 ],
             ],
             [
@@ -47,9 +55,19 @@ class JobSerializerTest extends TestCase
                 [
                     'id' => $job2->getId()->__toString(),
                     'name' => 'Bar',
-                    'arguments' => json_encode(['--a=b', '-cde', 'fgh']),
+                    'arguments' => \json_encode(['--a=b', '-cde', 'fgh']),
                     'max_retries' => 5,
-                    'retry_interval' => 60,
+                    'retries' => 0,
+                ],
+            ],
+            [
+                $job3,
+                [
+                    'id' => $job3->getId()->__toString(),
+                    'name' => 'Bar',
+                    'arguments' => \json_encode(['--a=b', '-cde', 'fgh']),
+                    'max_retries' => 5,
+                    'retries' => 1,
                 ],
             ],
         ];

@@ -34,6 +34,11 @@ class Worker
     private $processFactory;
 
     /**
+     * @var RetrySchedulerInterface
+     */
+    private $retryScheduler;
+
+    /**
      * @var int
      */
     private $maxJobs;
@@ -63,6 +68,7 @@ class Worker
         QueueInterface $queue,
         ReporterInterface $reporter,
         ProcessFactoryInterface $processFactory,
+        RetrySchedulerInterface $retryScheduler,
         int $maxJobs = 4,
         LoggerInterface $logger = null
     ) {
@@ -70,9 +76,10 @@ class Worker
         $this->queue = $queue;
         $this->reporter = $reporter;
         $this->processFactory = $processFactory;
-        $this->runningJobs = new \SplObjectStorage();
+        $this->retryScheduler = $retryScheduler;
         $this->maxJobs = $maxJobs;
         $this->logger = $logger ?: new NullLogger();
+        $this->runningJobs = new \SplObjectStorage();
     }
 
     /**
@@ -161,7 +168,12 @@ class Worker
             $this->logger->info(\sprintf('<error>%s FAILED</error>', $job->getName()), ['job' => (string) $job->getId(), 'exit_code' => $process->getExitCode()]);
 
             if ($job->isRetryable()) {
-                $retryJob = $job->retry($this->queue);
+                [$retryJob, $executeAt] = $job->retry($this->retryScheduler);
+                \assert($retryJob instanceof Job);
+                \assert($executeAt instanceof \DateTimeInterface || null === $executeAt);
+
+                $this->queue->enqueue($retryJob, $executeAt);
+
                 $this->reporter->reportJobRetrying($job->getId(), $retryJob->getId());
                 $this->logger->info(\sprintf('<error>%s RETRYING to %s</error>', $job->getId(), $retryJob->getId()));
             }

@@ -34,21 +34,19 @@ class Job
     /**
      * @var int
      */
-    private $retryInterval;
+    private $retries = 0;
 
     /**
-     * @param string   $name          The job name.
-     * @param iterable $arguments     The job arguments.
-     * @param int      $maxRetries    The number how many times the job can be retried for, 0 (by default) = never.
-     * @param int      $retryInterval The interval seconds for retry.
+     * @param string   $name       The job name.
+     * @param iterable $arguments  The job arguments.
+     * @param int      $maxRetries The number how many times the job can be retried for, 0 (by default) = never.
      */
-    public function __construct(string $name, iterable $arguments = [], int $maxRetries = 0, int $retryInterval = 0)
+    public function __construct(string $name, iterable $arguments = [], int $maxRetries = 0)
     {
         $this->id = new JobId();
         $this->name = $name;
         $this->arguments = \is_array($arguments) ? $arguments : \iterator_to_array($arguments);
         $this->maxRetries = $maxRetries;
-        $this->retryInterval = $retryInterval;
     }
 
     public function __clone()
@@ -95,29 +93,27 @@ class Job
      */
     public function isRetryable(): bool
     {
-        return 0 < $this->maxRetries;
+        return 0 < $this->maxRetries - $this->retries;
     }
 
     /**
-     * Retries the job using the queue.
+     * Returns the new created job to retry and the datetime when it's executed at.
      *
-     * @param QueueInterface $queue
+     * @param RetrySchedulerInterface $retryScheduler
      *
-     * @return Job
+     * @return array
      *
      * @throws ExceptionInterface
      */
-    public function retry(QueueInterface $queue): Job
+    public function retry(RetrySchedulerInterface $retryScheduler): array
     {
         if (!$this->isRetryable()) {
             throw new class('This job cannot be retried anymore.') extends \BadMethodCallException implements ExceptionInterface {};
         }
 
         $cloned = clone $this;
-        $cloned->maxRetries--;
+        $cloned->retries++;
 
-        $queue->enqueue($cloned, new \DateTimeImmutable(sprintf('+%d sec', $this->retryInterval)));
-
-        return $cloned;
+        return [$cloned, $retryScheduler->scheduleNextRetry($cloned, $cloned->retries)];
     }
 }
