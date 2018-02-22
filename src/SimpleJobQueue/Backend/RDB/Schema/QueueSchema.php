@@ -12,7 +12,7 @@ namespace Issei\SimpleJobQueue\Backend\RDB\Schema;
  * @property-read string $queueColumn
  * @property-read string $executeAtColumn
  * @property-read string $maxRetriesColumn
- * @property-read string $retryIntervalColumn
+ * @property-read string $retriesColumn
  *
  * @author Issei Murasawa <issei.m7@gmail.com>
  */
@@ -28,6 +28,6 @@ final class QueueSchema
         'queueColumn' => 'queue',
         'executeAtColumn' => 'execute_at',
         'maxRetriesColumn' => 'max_retries',
-        'retryIntervalColumn' => 'retry_interval',
+        'retriesColumn' => 'retries',
     ];
 }

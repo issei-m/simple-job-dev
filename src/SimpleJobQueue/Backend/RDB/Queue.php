@@ -60,7 +60,7 @@ class Queue implements QueueInterface
                 $this->queueSchema->queueColumn => ':queue',
                 $this->queueSchema->executeAtColumn => ':execute_at',
                 $this->queueSchema->maxRetriesColumn => ':max_retries',
-                $this->queueSchema->retryIntervalColumn => ':retry_interval',
+                $this->queueSchema->retriesColumn => ':retries',
             ])
             ->setParameters([
                 'id' => $serialized['id'],
@@ -69,7 +69,7 @@ class Queue implements QueueInterface
                 'queue' => $this->name,
                 'execute_at' => $executeAt ?: new \DateTimeImmutable('now'),
                 'max_retries' => $serialized['max_retries'],
-                'retry_interval' => $serialized['retry_interval'],
+                'retries' => $serialized['retries'],
             ], [
                 'execute_at' => Type::getType(Type::DATETIME_IMMUTABLE),
             ])
@@ -91,7 +91,7 @@ class Queue implements QueueInterface
                 $this->queueSchema->nameColumn . ' AS name',
                 $this->queueSchema->argumentsColumn . ' AS arguments',
                 $this->queueSchema->maxRetriesColumn . ' AS max_retries',
-                $this->queueSchema->retryIntervalColumn . ' AS retry_interval'
+                $this->queueSchema->retriesColumn . ' AS retries'
             )
             ->from($this->queueSchema->table)
             ->where($this->queueSchema->executeAtColumn . ' <= :execute_at')
